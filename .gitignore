@@ -1,0 +1,74 @@
+
+# ---- Go build artifacts ----
+**/bin/
+**/build/
+**/dist/
+**/out/
+**/debug/
+**/release/
+**/tmp/
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
+
+# ---- Go modules ----
+**/vendor/
+**/go.work
+**/go.work.sum
+
+# ---- Go coverage / test ----
+**/coverage/
+**/coverage.txt
+**/coverage.out
+**/profile.out
+**/testdata/tmp/
+**/*.log
+
+# ---- IDE & Editor ----
+# VS Code
+**/.vscode/
+**/.history/
+**/.idea/
+**/*.code-workspace
+
+# JetBrains
+**/.idea/
+**/.iml
+
+# Sublime / Other
+**/*.sublime-project
+**/*.sublime-workspace
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# ---- Env / Config ----
+.env
+.env.*
+*.local
+*.secret
+*.key
+*.pem
+
+# ---- Dependency / Tool cache ----
+**/.cache/
+**/.tmp/
+**/.tool/
+**/.devcontainer/
+
+# ---- Logs ----
+*.log
+**/logs/
+**/log/
+
+# ---- Misc ----
+**/.DS_Store
+**/__pycache__/
+**/*.swp
+**/*.swo
