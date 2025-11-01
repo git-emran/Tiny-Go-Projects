@@ -40,6 +40,8 @@ func handleRequest(conn net.Conn) {
 	}
 
 	fmt.Print("Message Recieved from the client:", string(message))
+
+	conn.Write([]byte(message + "\n"))
 	conn.Close()
 
 }
