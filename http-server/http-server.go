@@ -18,6 +18,15 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Login page")
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Logout page")
+
+}
+
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
@@ -34,6 +43,8 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 
 func main() {
 	http.HandleFunc("/", BasicAuth(helloWorld, "Please enter your username and password"))
+	http.HandleFunc("/login", login)
+	http.HandleFunc("/logout", logout)
 	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, nil)
 	if err != nil {
 		log.Fatal("error starting up http server: ", err)
