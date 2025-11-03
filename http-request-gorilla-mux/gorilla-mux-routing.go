@@ -1,8 +1,11 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -35,9 +38,14 @@ var PathVariableHandler = http.HandlerFunc(
 
 func main() {
 	router := mux.NewRouter()
-	router.Handle("/", GetRequestHandler).Methods("GET")
-	router.Handle("/post", PostRequestHandler).Methods("POST")
-	router.Handle("/hello/{name}", PathVariableHandler).Methods("GET", "PUT")
+	router.Handle("/", handlers.LoggingHandler(os.Stdout, http.HandlerFunc(GetRequestHandler))).Methods("GET")
+	logFile, err := os.OpenFile("server.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("error starting http server: ", err)
+		return
+	}
+	router.Handle("/post", handlers.LoggingHandler(logFile, PostRequestHandler)).Methods("POST")
+	router.Handle("/hello/{name}", handlers.CombinedLoggingHandler(logFile, PathVariableHandler)).Methods("GET")
 	http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
 
 }
