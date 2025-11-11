@@ -6,12 +6,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gorilla/schema"
 )
 
 const (
-	CONN_HOST = "localhost"
-	CONN_PORT = "8080"
+	CONN_HOST              = "localhost"
+	CONN_PORT              = "8080"
+	USERNAME_ERROR_MESSAGE = "Please enter a valid Username"
+	PASSWORD_ERROR_MESSAGE = "Please enter a valid password"
+	GENERIC_ERROR_MESSAGE  = "Validation Error"
 )
 
 type Person struct {
@@ -20,8 +24,8 @@ type Person struct {
 }
 
 type User struct {
-	Username string
-	Password string
+	Username string `valid:"alpha,required"`
+	Password string `valid:"alpha,required"`
 }
 
 func readForm(r *http.Request) *User {
@@ -33,6 +37,27 @@ func readForm(r *http.Request) *User {
 		log.Println("error mapping parsed form data to struct: ", decodeErr)
 	}
 	return user
+}
+
+func validateUser(w http.ResponseWriter, r *http.Request, user *User) (bool, string) {
+	valid, validationError := govalidator.ValidateStruct(user)
+	if !valid {
+		usernameError := govalidator.ErrorByField(validationError, "Username")
+		passwordError := govalidator.ErrorByField(validationError, "Password")
+
+		if usernameError != "" {
+			log.Println("username validation error: ", usernameError)
+			return valid, USERNAME_ERROR_MESSAGE
+		}
+
+		if passwordError != "" {
+			log.Println("password validation error: ", passwordError)
+			return valid, PASSWORD_ERROR_MESSAGE
+		}
+
+	}
+
+	return valid, GENERIC_ERROR_MESSAGE
 
 }
 
@@ -42,6 +67,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 		parsedTemplate.Execute(w, nil)
 	} else {
 		user := readForm(r)
+		valid, validationErrorMessage := validateUser(w, r, user)
+		if !valid {
+			fmt.Fprint(w, validationErrorMessage)
+			return
+		}
 		fmt.Fprint(w, "Hello "+user.Username+"!")
 	}
 
