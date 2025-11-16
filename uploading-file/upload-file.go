@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -32,5 +33,28 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("error occured while file copy: ", copyFileError)
 	}
 	fmt.Fprint(w, "File uploadedFile successfully: "+header.Filename)
+}
+
+func index(w http.ResponseWriter, r *http.Request) {
+
+	parsedTemplate, err := template.ParseFiles("templates/upload-file.html")
+
+	if err != nil {
+		http.Error(w, "template not found: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	parsedTemplate.Execute(w, nil)
+}
+
+func main() {
+	http.HandleFunc("/", index)
+	http.HandleFunc("/upload", fileHandler)
+
+	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, nil)
+
+	if err != nil {
+		log.Fatal("Error starting HTTP server: ", err)
+		return
+	}
 
 }
