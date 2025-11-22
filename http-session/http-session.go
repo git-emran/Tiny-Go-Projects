@@ -21,7 +21,7 @@ func init() {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session-name")
-	var authenticated interface{} = session.Values["authenticated"]
+	var authenticated any = session.Values["authenticated"]
 	if authenticated != nil {
 		isAuthenticated := session.Values["authenticated"].(bool)
 
