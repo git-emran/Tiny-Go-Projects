@@ -71,3 +71,22 @@ func getEmployee(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func AddRoutes(router *mux.Router) *mux.Router {
+	for _, route := range routes {
+		router.Methods(route.Method).Path(route.Pattern).Name(route.Name).Handler(route.HandlerFunc)
+	}
+
+	return router
+}
+
+func main() {
+	muxRouter := mux.NewRouter().StrictSlash(true)
+	router := AddRoutes(muxRouter)
+	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
+
+	if err != nil {
+		log.Fatal("Error starting http server ::", err)
+		return
+	}
+}
