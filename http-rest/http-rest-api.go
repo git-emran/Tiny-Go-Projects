@@ -1,6 +1,12 @@
 package main
 
-import "net/http"
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
 
 const (
 	CONN_HOST = "localhost"
@@ -46,5 +52,22 @@ func init() {
 	employees = Employees{
 		Employee{Id: "1", FirstName: "Foo", LastName: "Bar"},
 		Employee{Id: "2", FirstName: "Fizz", LastName: "Buzz"},
+	}
+}
+
+func getEmployees(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(employees)
+}
+
+func getEmployee(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	for _, employee := range employees {
+		if employee.Id == id {
+			if err := json.NewEncoder(w).Encode(employee); err != nil {
+				log.Print("error getting requested employee ::", err)
+			}
+		}
 	}
 }
