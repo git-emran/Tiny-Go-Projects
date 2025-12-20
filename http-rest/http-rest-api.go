@@ -36,6 +36,13 @@ var routes = Routes{
 		"/employee/{id}",
 		getEmployee,
 	},
+
+	Route{
+		"addEmployee",
+		"POST",
+		"/employee/add",
+		addEmployee,
+	},
 }
 
 type Employee struct {
@@ -70,6 +77,21 @@ func getEmployee(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+}
+
+func addEmployee(w http.ResponseWriter, r *http.Request) {
+	employee := Employee{}
+	err := json.NewDecoder(r.Body).Decode(&employee)
+
+	if err != nil {
+		log.Print("error occured while decoding employee data::", err)
+		return
+	}
+
+	log.Printf("adding employee id:: %s with firstName as :: %s and lastName as:: %s", employee.Id, employee.FirstName, employee.LastName)
+
+	employees = append(employees, Employee{Id: employee.Id, FirstName: employee.FirstName, LastName: employee.LastName})
+	json.NewEncoder(w).Encode(employees)
 }
 
 func AddRoutes(router *mux.Router) *mux.Router {
