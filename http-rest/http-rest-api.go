@@ -43,6 +43,13 @@ var routes = Routes{
 		"/employee/add",
 		addEmployee,
 	},
+
+	Route{
+		"updateEmployee",
+		"PUT",
+		"/employee/update",
+		updateEmployee,
+	},
 }
 
 type Employee struct {
@@ -91,6 +98,36 @@ func addEmployee(w http.ResponseWriter, r *http.Request) {
 	log.Printf("adding employee id:: %s with firstName as :: %s and lastName as:: %s", employee.Id, employee.FirstName, employee.LastName)
 
 	employees = append(employees, Employee{Id: employee.Id, FirstName: employee.FirstName, LastName: employee.LastName})
+	json.NewEncoder(w).Encode(employees)
+}
+
+func updateEmployee(w http.ResponseWriter, r *http.Request) {
+	employee := Employee{}
+	err := json.NewDecoder(r.Body).Decode(&employee)
+
+	if err != nil {
+		log.Print("Error occured while decoding employee data ::", err)
+		return
+	}
+
+	var isUpsert = true
+
+	for idx, emp := range employees {
+		if emp.Id == employee.Id {
+			isUpsert = false
+			log.Printf("Updating employee id :: %s with firstName as :: %s and lastName as :: %s ", employee.Id, employee.FirstName, employee.LastName)
+			employees[idx].FirstName = employee.FirstName
+			employees[idx].LastName = employee.LastName
+			break
+		}
+	}
+
+	if isUpsert {
+		log.Printf("upserting employee id :: %s with firstName as :: %s and lastName as :: %s", employee.Id, employee.FirstName, employee.LastName)
+
+		employees = append(employees, Employee{Id: employee.Id, FirstName: employee.FirstName, LastName: employee.LastName})
+	}
+
 	json.NewEncoder(w).Encode(employees)
 }
 
