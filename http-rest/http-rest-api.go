@@ -68,16 +68,44 @@ type Employee struct {
 type Employees []Employee
 
 var employees []Employee
+var employeesV1 []Employee
+var employeesV2 []Employee
 
 func init() {
+
 	employees = Employees{
 		Employee{Id: "1", FirstName: "Foo", LastName: "Bar"},
 		Employee{Id: "2", FirstName: "Fizz", LastName: "Buzz"},
 	}
+
+	employeesV1 = Employees{
+		Employee{Id: "1", FirstName: "Qux", LastName: "Klitt"},
+		Employee{Id: "2", FirstName: "Qizz", LastName: "Blitt"},
+	}
+
+	employeesV2 = Employees{
+		Employee{Id: "1", FirstName: "Beaux", LastName: "Neim"},
+		Employee{Id: "2", FirstName: "Bill", LastName: "Veim"},
+	}
 }
 
 func getEmployees(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	json.NewEncoder(w).Encode(employees)
+}
+
+func getEmployeesV1(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(employeesV1)
+}
+
+func getEmployeesV2(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(employeesV2)
 }
 
 func getEmployee(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +178,8 @@ func deleteEmployee(w http.ResponseWriter, r *http.Request) {
 
 	index := GetIndex(employee.Id)
 	employees = append(employees[:index], employees[index+1:]...)
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(employees)
 }
 
@@ -174,6 +204,19 @@ func AddRoutes(router *mux.Router) *mux.Router {
 func main() {
 	muxRouter := mux.NewRouter().StrictSlash(true)
 	router := AddRoutes(muxRouter)
+
+	router.HandleFunc("/employees", getEmployees).Methods("GET")
+
+	//v1
+	v1 := router.PathPrefix("/v1").Subrouter()
+	v1.HandleFunc("/employees", getEmployeesV1).Methods("GET")
+
+	//v2
+	v2 := router.PathPrefix("/v2").Subrouter()
+	v2.HandleFunc("/employees", getEmployeesV2).Methods("GET")
+
+	log.Printf("Server running on http://%s:%s\n", CONN_HOST, CONN_PORT)
+
 	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
 
 	if err != nil {
