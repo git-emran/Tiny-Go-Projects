@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"gopkg.in/resty.v1"
 )
 
@@ -21,8 +23,8 @@ type Employee struct {
 	LastName  string `json:"lastName"`
 }
 
-func getEmployee(w http.ResponseWriter, r *http.Request) {
-	response, err := resty.R().Get(WEB_SERVICE_HOST + "/employee")
+func getEmployees(w http.ResponseWriter, r *http.Request) {
+	response, err := resty.R().Get(WEB_SERVICE_HOST + "/employees")
 	if err != nil {
 		log.Printf("Error getting data from the webservice %s::", err)
 		return
@@ -31,4 +33,9 @@ func getEmployee(w http.ResponseWriter, r *http.Request) {
 	print(response, err)
 	fmt.Fprint(w, response.String())
 
+}
+
+func main() {
+	router := mux.NewRouter().StrictSlash(false)
+	router.HandleFunc("/employees", getEmployees).Methods("GET")
 }
