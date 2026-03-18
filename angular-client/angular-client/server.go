@@ -88,5 +88,11 @@ func main() {
 	muxRouter := mux.NewRouter().StrictSlash(true)
 	router := AddRoutes(muxRouter)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./dist/")))
+	err := http.ListenAndServe(ConnHost+":"+ConnPort, router)
+
+	if err != nil {
+		log.Fatal("Error starting http server ::", err)
+		return
+	}
 
 }
