@@ -1,10 +1,14 @@
 package main
 
-import "net/http"
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+)
 
 const (
-	CONN_HOST = "localhost"
-	CONN_PORT = "8080"
+	ConnHost = "localhost"
+	ConnPort = "8080"
 )
 
 type Route struct {
@@ -47,5 +51,21 @@ func init() {
 		Employee{Id: "1", FirstName: "Uno", LastName: "Momento"},
 		Employee{Id: "2", FirstName: "Dos", LastName: "Loco"},
 	}
+
+}
+
+func getEmployees(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(employees)
+
+}
+
+func addEmployee(w http.ResponseWriter, r *http.Request) {
+	employee := Employee{}
+	err := json.NewDecoder(r.Body).Decode(&employee)
+	if err != nil {
+		log.Print("Error occured while decoing employee data::", err)
+		return
+	}
+	log.Printf("adding employee id:: %s with first-name as :: %s and last-name as %s", employee.Id, employee.FirstName, employee.LastName)
 
 }
