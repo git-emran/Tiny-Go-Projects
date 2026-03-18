@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -37,7 +39,7 @@ var routes = Routes{
 }
 
 type Employee struct {
-	Id        string `json:"id"`
+	ID        string `json:"ID"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 }
@@ -48,8 +50,8 @@ var employees []Employee
 
 func init() {
 	employees = Employees{
-		Employee{Id: "1", FirstName: "Uno", LastName: "Momento"},
-		Employee{Id: "2", FirstName: "Dos", LastName: "Loco"},
+		Employee{ID: "1", FirstName: "Uno", LastName: "Momento"},
+		Employee{ID: "2", FirstName: "Dos", LastName: "Loco"},
 	}
 
 }
@@ -66,6 +68,25 @@ func addEmployee(w http.ResponseWriter, r *http.Request) {
 		log.Print("Error occured while decoing employee data::", err)
 		return
 	}
-	log.Printf("adding employee id:: %s with first-name as :: %s and last-name as %s", employee.Id, employee.FirstName, employee.LastName)
+	log.Printf("adding employee ID:: %s with first-name as :: %s and last-name as %s", employee.ID, employee.FirstName, employee.LastName)
+
+	employees = append(employees, Employee{ID: employee.ID, FirstName: employee.FirstName, LastName: employee.LastName})
+	json.NewEncoder(w).Encode(employees)
+}
+
+func AddRoutes(router *mux.Router) *mux.Router {
+	for _, route := range routes {
+		router.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).Handler(route.HandlerFunc)
+	}
+	return router
+}
+
+func main() {
+	muxRouter := mux.NewRouter().StrictSlash(true)
+	router := AddRoutes(muxRouter)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./dist/")))
 
 }
