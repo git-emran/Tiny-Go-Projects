@@ -5,3 +5,4 @@ export class Employee {
     public lastName: string,
   ) {}
 }
+
