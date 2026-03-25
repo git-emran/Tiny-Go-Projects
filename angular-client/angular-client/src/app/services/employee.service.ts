@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 import { Employee } from '../models/employee';
-import { error } from 'console';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +12,12 @@ export class EmployeeService {
   getEmployees(): Observable<Employee[]> {
     return this.http
       .get<Employee[]>(`${this.baseUrl}/employees`)
+      .pipe(catchError(this.handleError));
+  }
+
+  addEmployee(employee: Employee): Observable<Employee> {
+    return this.http
+      .post<Employee>(`${this.baseUrl}/employee/add`, employee)
       .pipe(catchError(this.handleError));
   }
 
