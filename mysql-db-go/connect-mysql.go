@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -30,26 +29,22 @@ func init() {
 }
 
 func creatRecord(w http.ResponseWriter, r *http.Request) {
-
 	vals := r.URL.Query()
 	name, ok := vals["name"]
-	if ok {
-		log.Print("Going to insert record in database for name: ", name[0])
-		stmt, err := db.Prepare("Insert employee set name=?")
-		if err == nil {
-			log.Print("Error preparing querying ::", err)
-			return
-		}
-		result, err := stmt.Exec(name[0])
-		if err != nil {
-			log.Print("Error executing query::", err)
-		}
 
-		id, err := result.LastInsertId()
-		fmt.Fprintf(w, "last inserted record ID is :: %s", strconv.FormatInt(id, 10))
-	} else {
-		fmt.Fprintf(w, "Error occured while creating record in database for name:: %s", name[0])
+	if !ok || len(name) == 0 {
+		log.Print("Missing 'name' in parameter request ")
+		http.Error(w, "Query parameter name is required", http.StatusBadRequest)
+		return
 	}
+	log.Print("Going to insert record in database for name: ", name[0])
+	result, err := db.Exec("INSERT INTO employee (name) VALUES (?)", name[0])
+	if err != nil {
+		log.Print("Error executing query")
+		return
+	}
+	id, _ := result.LastInsertId()
+	fmt.Fprintf(w, "Last insert record ID is :: %d", id)
 }
 
 func getCurrentDB(w http.ResponseWriter, r *http.Request) {
@@ -73,8 +68,7 @@ func main() {
 	router.HandleFunc("/employee/create", creatRecord).Methods("POST")
 	router.HandleFunc("/", getCurrentDB).Methods("GET")
 	defer db.Close()
-	err := http.ListenAndServe(Host+":"+Port, nil)
-
+	err := http.ListenAndServe(Host+":"+Port, router)
 	if err != nil {
 		log.Fatal("Error starting http server ::", err)
 		return
