@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +18,11 @@ const (
 	dataSourceName = "root:@/mydb"
 )
 
+type Employee struct {
+	Id   int    `json:"uid"`
+	Name string `json: "name"`
+}
+
 var db *sql.DB
 var connectionError error
 
@@ -28,7 +34,26 @@ func init() {
 	}
 }
 
-func creatRecord(w http.ResponseWriter, r *http.Request) {
+func readRecords(w http.ResponseWriter, r *http.Request) {
+	log.Print("reading database records")
+	rows, err := db.Query("SELECT * FROM employee")
+	if err != nil {
+		log.Print("Error executing select query ::", err)
+		return
+	}
+
+	employees := []Employee{}
+	for rows.Next() {
+		var uid int
+		var name string
+		err = rows.Scan(&uid, &name)
+		employee := Employee{Id: uid, Name: name}
+		employees = append(employees, employee)
+	}
+	json.NewEncoder(w).Encode(employees)
+}
+
+func createRecord(w http.ResponseWriter, r *http.Request) {
 	vals := r.URL.Query()
 	name, ok := vals["name"]
 
@@ -65,7 +90,8 @@ func getCurrentDB(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/employee/create", creatRecord).Methods("POST")
+	router.HandleFunc("/employee/create", createRecord).Methods("POST")
+	router.HandleFunc("/employees", readRecords).Methods("GET")
 	router.HandleFunc("/", getCurrentDB).Methods("GET")
 	defer db.Close()
 	err := http.ListenAndServe(Host+":"+Port, router)
