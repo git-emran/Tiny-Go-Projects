@@ -19,8 +19,8 @@ const (
 )
 
 type Employee struct {
-	Id   int    `json:"uid"`
-	Name string `json: "name"`
+	ID   int    `json:"uid"`
+	Name string `json:"name"`
 }
 
 var db *sql.DB
@@ -47,7 +47,10 @@ func readRecords(w http.ResponseWriter, r *http.Request) {
 		var uid int
 		var name string
 		err = rows.Scan(&uid, &name)
-		employee := Employee{Id: uid, Name: name}
+		if err != nil {
+			log.Print("Error scanning the name")
+		}
+		employee := Employee{ID: uid, Name: name}
 		employees = append(employees, employee)
 	}
 	json.NewEncoder(w).Encode(employees)
@@ -65,7 +68,7 @@ func createRecord(w http.ResponseWriter, r *http.Request) {
 	log.Print("Going to insert record in database for name: ", name[0])
 	result, err := db.Exec("INSERT INTO employee (name) VALUES (?)", name[0])
 	if err != nil {
-		log.Print("Error executing query")
+		log.Printf("Error executing query %v", err)
 		return
 	}
 	id, _ := result.LastInsertId()
@@ -75,7 +78,7 @@ func createRecord(w http.ResponseWriter, r *http.Request) {
 func getCurrentDB(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT DATABASE() as db")
 	if err != nil {
-		log.Print("Error executing query::", err)
+		log.Printf("Error executing query:: %v", err)
 		return
 	}
 	defer rows.Close()
