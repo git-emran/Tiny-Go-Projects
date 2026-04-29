@@ -102,10 +102,37 @@ func updateRecord(w http.ResponseWriter, r *http.Request) {
 		rowsAffected, err := result.RowsAffected()
 		fmt.Printf("Number of rows updated in database %d", rowsAffected)
 		if err != nil {
-			log.Print("Error printing result")
+			log.Print("Error printing result", err)
 		}
 	} else {
 		fmt.Printf("Error while updating record in database for id :: %s", id)
+	}
+}
+
+func deleteRecord(w http.ResponseWriter, r *http.Request) {
+	vals := r.URL.Query()
+	name, ok := vals["name"]
+
+	if ok {
+		log.Print("Deleting the record from the database for name::", name[0])
+		stmt, err := db.Prepare("DELETE from employee where name=?")
+		if err != nil {
+			log.Print("Error deleting from the database", err)
+			return
+		}
+
+		result, err := stmt.Exec(name[0])
+		if err != nil {
+			log.Print("Error executing query ::", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		fmt.Printf("Number of rows effected in database %d", rowsAffected)
+		if err != nil {
+			log.Print("Error printing result", err)
+		}
+	} else {
+		fmt.Printf("Error while deleting record in Database for name :: %s", name)
 	}
 }
 
@@ -127,6 +154,7 @@ func getCurrentDB(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/employee/delete", deleteRecord).Methods("DELETE")
 	router.HandleFunc("/employee/update/{id}", updateRecord).Methods("PUT")
 	router.HandleFunc("/employee/create", createRecord).Methods("POST")
 	router.HandleFunc("/employees", readRecords).Methods("GET")
