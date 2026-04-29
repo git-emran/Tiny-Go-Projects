@@ -23,8 +23,10 @@ type Employee struct {
 	Name string `json:"name"`
 }
 
-var db *sql.DB
-var connectionError error
+var (
+	db              *sql.DB
+	connectionError error
+)
 
 func init() {
 	db, connectionError = sql.Open(driver, dataSourceName)
@@ -50,6 +52,7 @@ func readRecords(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Print("Error scanning the name")
 		}
+
 		employee := Employee{ID: uid, Name: name}
 		employees = append(employees, employee)
 	}
@@ -72,7 +75,38 @@ func createRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := result.LastInsertId()
+
 	fmt.Fprintf(w, "Last insert record ID is :: %d", id)
+}
+
+func updateRecord(w http.ResponseWriter, r *http.Request) {
+	// store the request and get the id
+	vars := mux.Vars(r)
+	id := vars["id"]
+	// store the query in 'vals' and print the name
+	vals := r.URL.Query()
+	name, ok := vals["name"]
+
+	if ok {
+		log.Print("Updating record in database for id::", id)
+		// Making the db query
+		stmt, err := db.Prepare("UPDATE employee SET name=? where id=?")
+		if err != nil {
+			log.Print("Error updating employee name ::", err)
+			return
+		}
+		result, err := stmt.Exec(name[0], id)
+		if err != nil {
+			log.Print("Error while executing query ::", err)
+		}
+		rowsAffected, err := result.RowsAffected()
+		fmt.Printf("Number of rows updated in database %d", rowsAffected)
+		if err != nil {
+			log.Print("Error printing result")
+		}
+	} else {
+		fmt.Printf("Error while updating record in database for id :: %s", id)
+	}
 }
 
 func getCurrentDB(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +126,8 @@ func getCurrentDB(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/employee/update/{id}", updateRecord).Methods("PUT")
 	router.HandleFunc("/employee/create", createRecord).Methods("POST")
 	router.HandleFunc("/employees", readRecords).Methods("GET")
 	router.HandleFunc("/", getCurrentDB).Methods("GET")
