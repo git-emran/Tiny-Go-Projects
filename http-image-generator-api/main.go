@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Message struct {
-	Name  string `json: "name"`
-	Email string `json: "email" binding: "required, email"`
+	Name  string `json:"name"`
+	Email string `json:"email" binding:"required, email"`
 }
 
 func router() *gin.Engine {
@@ -28,6 +29,14 @@ func router() *gin.Engine {
 			return
 		}
 		fmt.Println(body)
+		c.JSON(http.StatusAccepted, &body)
+	})
+
+	userRoute.POST("/upload", func(c *gin.Context) {
+		file, _ := c.FormFile("file")
+		log.Println(file.Filename)
+		c.SaveUploadedFile(file, "/tmp/tempfile")
+		c.String(http.StatusOK, fmt.Sprintf("%s uploaded!", file.Filename))
 	})
 
 	return r
