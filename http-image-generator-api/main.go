@@ -1,32 +1,59 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/golang-queue/queue"
+	"github.com/golang-queue/queue/core"
 )
 
-func sleepSomeTime() string {
-	sleepTime := time.Duration(rand.Intn(60)) * time.Second
-	message := fmt.Sprintf("%s\n", sleepTime)
-	time.Sleep(sleepTime)
-	return message
+type jobData struct {
+	Name    string
+	Message string
 }
 
-func job(i int, rets chan string) {
-	sleepSomeTime()
-	rets <- fmt.Sprintf("Hi gopher, handle the job: %02d", +i)
+func (j *jobData) Bytes() []byte {
+	fmt.Printf("%s:%s\n", j.Name, j.Message)
+	res := sleepSomeTime()
+	j = &jobData{Name: "Iam Awake", Message: res}
+	b, _ := json.Marshal(j)
+	return b
+}
+
+func sleepSomeTime() string {
+	seconds := rand.Intn(20)
+	sleepTime := time.Duration(seconds) * time.Second
+	time.Sleep(sleepTime)
+	return fmt.Sprintf("Commander, I slept: %d seconds", seconds)
 }
 
 func main() {
+	rand.Intn(100)
 	taskN := 100
 	rets := make(chan string, taskN)
-	for i := 0; i < taskN; i++ {
-		go job(i, rets)
+	q := queue.NewPool(30, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
+		var data jobData
+		json.Unmarshal(m.Bytes(), &data)
+		rets <- "Hello, " + data.Name + ", " + data.Message
+		return nil
+	}))
+	defer q.Release()
+
+	for i := range taskN {
+		go func(i int) {
+			q.Queue(&jobData{
+				Name:    "Sleeping Gophers",
+				Message: fmt.Sprintf("hello commander, I am handling the job: %d", +i),
+			})
+		}(i)
 	}
 
-	for i := 0; i < taskN; i++ {
-		fmt.Println("message:", <-rets)
-		time.Sleep(20 * time.Millisecond)
+	for range taskN {
+		fmt.Println("message: ", <-rets)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
