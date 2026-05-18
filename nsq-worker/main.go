@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-queue/queue"
 	"github.com/golang-queue/queue/core"
+	"github.com/nsqio/go-nsq"
 )
 
 type jobData struct {
@@ -35,6 +36,7 @@ func main() {
 	rand.Intn(100)
 	taskN := 100
 	rets := make(chan string, taskN)
+
 	q := queue.NewPool(30, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
 		var data jobData
 		json.Unmarshal(m.Bytes(), &data)
