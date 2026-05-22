@@ -19,7 +19,7 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-func handleClients(w http.ResponseWriter, r *http.Request) {
+func HandleClients(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade error ::", err)
@@ -67,7 +67,7 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	http.HandleFunc("/echo", handleClients)
+	http.HandleFunc("/echo", HandleClients)
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
