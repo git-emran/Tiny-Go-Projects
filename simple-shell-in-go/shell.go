@@ -34,7 +34,6 @@ func execInput(input string) error {
 	args := strings.Split(input, " ")
 
 	// check for built in commands
-
 	switch args[0] {
 	case "cd":
 		if len(args) < 2 {
@@ -44,6 +43,7 @@ func execInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	}
+
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
