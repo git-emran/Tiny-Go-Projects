@@ -5,8 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
+
+type Stringer interface {
+	Stringer() string
+}
 
 type item struct {
 	Task        string
@@ -74,4 +79,19 @@ func (l *List) Get(filename string) error {
 		return nil
 	}
 	return json.Unmarshal(file, l)
+}
+
+func (l *List) String() string {
+	var formatted strings.Builder
+
+	for k, t := range *l {
+		prefix := " "
+		if t.Done {
+			prefix = "X "
+		}
+
+		// Adjust the item number k to print numbers starting from 1 instead of 0
+		fmt.Fprintf(&formatted, "%s%d: %s\n", prefix, k+1, t.Task)
+	}
+	return formatted.String()
 }
