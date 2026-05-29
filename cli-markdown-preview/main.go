@@ -11,20 +11,19 @@ import (
 	"github.com/russross/blackfriday/v2"
 )
 
-const (
-	header = `<!DOCTYPE html>
-	<html>
-		<head>
-			<meta http-equiv="content-type" content="text/html; charset=utf-8">
-			<title>Markdown Preview Tool</title>
-		</head>
-		<body>
-		`
-	footer = `
-			</body>
-	</html>
-	`
-)
+const header = `<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>Markdown Preview Tool</title>
+</head>
+<body>
+`
+
+const footer = `
+</body>
+</html>
+`
 
 func main() {
 	filename := flag.String("file", "", "Markdown file to preview")
