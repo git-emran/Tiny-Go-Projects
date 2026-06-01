@@ -7,8 +7,5 @@ This is an example Markdown File to test the preview tool
 
 ## How to install
 
-```
+Click through the link and see the changes and more
 
-go get github.com/user/program
-
-```

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
@@ -69,6 +70,7 @@ func run(filename string, out io.Writer, skipPreview bool) error {
 		return nil
 	}
 
+	defer os.Remove(outName)
 	return preview(outName)
 }
 
@@ -109,6 +111,9 @@ func preview(fname string) error {
 	if err != nil {
 		return err
 	}
+	err = exec.Command(cPath, cParams...).Run()
 
-	return exec.Command(cPath, cParams...).Run()
+	// giving the browser some time before deleting it
+	time.Sleep(2 * time.Second)
+	return err
 }
