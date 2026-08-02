@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -15,9 +16,10 @@ type entry struct {
 }
 
 type model struct {
-	cwd     string
-	entries []entry
-	cursor  int
+	cwd      string
+	entries  []entry
+	cursor   int
+	pendingG bool
 }
 
 func readDir(path string) []entry {
@@ -55,21 +57,71 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		key := msg.String()
+
+		// handle the pending "gg" sequence first
+		if m.pendingG {
+			m.pendingG = false
+			if key == "g" {
+				m.cursor = 0
+				return m, nil
+			}
+			// fall through — not a real "gg", handle key normally below
+		}
+
+		switch key {
 		case "q", "ctrl+c":
 			return m, tea.Quit
-		case "down", "j":
+		case "j", "down":
 			if m.cursor < len(m.entries)-1 {
 				m.cursor++
 			}
-
-		case "up", "k":
+		case "k", "up":
 			if m.cursor > 0 {
 				m.cursor--
 			}
+		case "g":
+			m.pendingG = true
+		case "G":
+			m.cursor = len(m.entries) - 1
+		case "h", "left":
+			m = m.goToParent()
+		case "l", "right", "enter":
+			m = m.enterSelected()
+		case "ctrl+d":
+			m.cursor = min(m.cursor+10, len(m.entries)-1)
+		case "ctrl+u":
+			m.cursor = max(m.cursor-10, 0)
 		}
 	}
 	return m, nil
+}
+
+func (m model) goToParent() model {
+	parent := filepath.Dir(m.cwd)
+	if parent == m.cwd {
+		return m
+	}
+
+	m.cwd = parent
+	m.entries = readDir(parent)
+	m.cursor = 0
+	return m
+}
+
+func (m model) enterSelected() model {
+	if len(m.entries) == 0 {
+		return m
+	}
+
+	sel := m.entries[m.cursor]
+	if sel.isDir {
+		newPath := filepath.Join(m.cwd, sel.name)
+		m.cwd = newPath
+		m.entries = readDir(newPath)
+		m.cursor = 0
+	}
+	return m
 }
 
 func (m model) View() string {
@@ -82,9 +134,9 @@ func (m model) View() string {
 		}
 		name := e.name
 		if e.isDir {
-			name = "/"
+			name += "/"
 		}
-		b.WriteString(fmt.Sprintf("%s%s\n", cursor, name))
+		fmt.Fprintf(&b, "%s%s\n", cursor, name)
 	}
 	return b.String()
 }
