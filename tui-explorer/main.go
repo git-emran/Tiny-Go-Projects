@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type entry struct {
@@ -17,9 +18,18 @@ type entry struct {
 
 type model struct {
 	cwd      string
-	entries  []entry
-	cursor   int
+	parent   pane
+	current  pane
+	preview  pane
+	width    int
+	height   int
 	pendingG bool
+}
+
+type pane struct {
+	path    string
+	entries []entry
+	cursor  int
 }
 
 func readDir(path string) []entry {
@@ -46,16 +56,58 @@ func initialModel() model {
 	cwd, _ := os.Getwd()
 	return model{
 		cwd:     cwd,
-		entries: readDir(cwd),
+		current: pane{path: cwd, entries: readDir(cwd)},
 	}
+}
+
+func (m model) refreshPanes() model {
+	m.parent = pane{
+		path:    filepath.Dir(m.cwd),
+		entries: readDir(filepath.Dir(m.cwd)),
+	}
+	for i, e := range m.parent.entries {
+		if e.name == filepath.Base(m.cwd) {
+			m.parent.cursor = i
+		}
+	}
+
+	if len(m.current.entries) > 0 {
+		sel := m.current.entries[m.current.cursor]
+		selPath := filepath.Join(m.cwd, sel.name)
+
+		if sel.isDir {
+			m.preview = pane{path: selPath, entries: readDir(selPath)}
+		} else {
+			m.preview = pane{}
+		}
+	} else {
+		m.preview = pane{}
+	}
+	return m
 }
 
 func (m model) Init() tea.Cmd {
 	return nil
 }
 
+func (m model) View() string {
+	if m.width == 0 {
+		return "loading"
+	}
+	colWidth := m.width / 3
+
+	parentView := renderPane(m.parent, colWidth, false)
+	currentView := renderPane(m.current, colWidth, true)
+	previewView := renderPane(m.preview, colWidth, false)
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, parentView, currentView, previewView)
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	case tea.KeyMsg:
 		key := msg.String()
 
@@ -63,7 +115,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.pendingG {
 			m.pendingG = false
 			if key == "g" {
-				m.cursor = 0
+				m.current.cursor = 0
+				m = m.refreshPanes()
 				return m, nil
 			}
 			// fall through — not a real "gg", handle key normally below
@@ -73,25 +126,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "j", "down":
-			if m.cursor < len(m.entries)-1 {
-				m.cursor++
+			if m.current.cursor < len(m.current.entries)-1 {
+				m.current.cursor++
 			}
 		case "k", "up":
-			if m.cursor > 0 {
-				m.cursor--
+			if m.current.cursor > 0 {
+				m.current.cursor--
 			}
 		case "g":
 			m.pendingG = true
 		case "G":
-			m.cursor = len(m.entries) - 1
+			m.current.cursor = len(m.current.entries) - 1
 		case "h", "left":
 			m = m.goToParent()
 		case "l", "right", "enter":
 			m = m.enterSelected()
 		case "ctrl+d":
-			m.cursor = min(m.cursor+10, len(m.entries)-1)
+			m.current.cursor = min(m.current.cursor+10, len(m.current.entries)-1)
 		case "ctrl+u":
-			m.cursor = max(m.cursor-10, 0)
+			m.current.cursor = max(m.current.cursor-10, 0)
 		}
 	}
 	return m, nil
@@ -104,41 +157,47 @@ func (m model) goToParent() model {
 	}
 
 	m.cwd = parent
-	m.entries = readDir(parent)
-	m.cursor = 0
-	return m
+	m.current.entries = readDir(parent)
+	m.current.cursor = 0
+	return m.refreshPanes()
 }
 
 func (m model) enterSelected() model {
-	if len(m.entries) == 0 {
+	if len(m.current.entries) == 0 {
 		return m
 	}
 
-	sel := m.entries[m.cursor]
+	sel := m.current.entries[m.current.cursor]
 	if sel.isDir {
 		newPath := filepath.Join(m.cwd, sel.name)
 		m.cwd = newPath
-		m.entries = readDir(newPath)
-		m.cursor = 0
+		m.current.entries = readDir(newPath)
+		m.current.cursor = 0
 	}
-	return m
+	return m.refreshPanes()
 }
 
-func (m model) View() string {
-	var b strings.Builder
-	b.WriteString(m.cwd + "\n\n")
-	for i, e := range m.entries {
-		cursor := " "
-		if i == m.cursor {
-			cursor = "> "
-		}
-		name := e.name
-		if e.isDir {
-			name += "/"
-		}
-		fmt.Fprintf(&b, "%s%s\n", cursor, name)
+func renderPane(p pane, width int, active bool) string {
+	style := lipgloss.NewStyle().Width(width).Height(20).Padding(0, 1)
+
+	if active {
+		style = style.BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("212"))
+	} else {
+		style = style.BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("240"))
 	}
-	return b.String()
+
+	var b strings.Builder
+	for i, e := range p.entries {
+		line := e.name
+		if e.isDir {
+			line += "/"
+		}
+		if i == p.cursor {
+			line = lipgloss.NewStyle().Reverse(true).Render(line)
+		}
+		b.WriteString(line + "\n")
+	}
+	return style.Render(b.String())
 }
 
 func main() {
