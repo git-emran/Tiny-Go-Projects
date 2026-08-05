@@ -5,7 +5,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/git-emran/tiny-go-project/tui-explorer/internal/fs"
+	"github.com/git-emran/tiny-go-project/tui-explorer/internal/preview"
 )
+
+type previewLoadedMessage struct {
+	path    string
+	content string
+	err     error
+}
 
 func (m Model) Init() tea.Cmd {
 	return nil
@@ -16,6 +23,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+	case previewLoadedMessage:
+		if msg.path == m.SelectedPath() {
+			if msg.err != nil {
+				m.previewText = "[error reading file]"
+			} else {
+				m.previewText = msg.content
+			}
+			m.previewPath = msg.path
+		}
+		return m, nil
 	case tea.KeyMsg:
 		key := msg.String()
 		var cmd tea.Cmd
@@ -90,4 +107,11 @@ func (m Model) enterSelected() (Model, tea.Cmd) {
 		return m.refreshPanes()
 	}
 	return m, nil
+}
+
+func loadPreviewCmd(path string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := preview.TextPreview(path)
+		return previewLoadedMessage{path: path, content: content, err: err}
+	}
 }

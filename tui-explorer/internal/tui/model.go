@@ -8,16 +8,20 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/git-emran/tiny-go-project/tui-explorer/internal/fs"
+	"github.com/git-emran/tiny-go-project/tui-explorer/internal/theme"
 )
 
 type Model struct {
-	cwd      string
-	parent   pane
-	current  pane
-	preview  pane
-	width    int
-	height   int
-	pendingG bool
+	cwd         string
+	parent      pane
+	current     pane
+	preview     pane
+	previewText string
+	previewPath string
+	width       int
+	height      int
+	pendingG    bool
+	icons       theme.IconSet
 }
 
 type pane struct {
@@ -31,9 +35,18 @@ func InitialModel() Model {
 	m := Model{
 		cwd:     cwd,
 		current: pane{path: cwd, entries: fs.ReadDir(cwd)},
+		icons:   theme.IconSetnerd,
 	}
 	m, _ = m.refreshPanes()
 	return m
+}
+
+func (m Model) SelectedPath() string {
+	if len(m.current.entries) == 0 || m.current.cursor > len(m.current.entries) {
+		return ""
+	}
+	sel := m.current.entries[m.current.cursor]
+	return filepath.Join(m.cwd, sel.Name)
 }
 
 func (m Model) refreshPanes() (Model, tea.Cmd) {
@@ -47,17 +60,20 @@ func (m Model) refreshPanes() (Model, tea.Cmd) {
 		}
 	}
 
-	if len(m.current.entries) > 0 {
-		sel := m.current.entries[m.current.cursor]
-		selPath := filepath.Join(m.cwd, sel.Name)
+	m.preview = pane{}
+	m.previewText = ""
+	m.previewPath = ""
 
-		if sel.IsDir {
-			m.preview = pane{path: selPath, entries: fs.ReadDir(selPath)}
-		} else {
-			m.preview = pane{}
-		}
-	} else {
-		m.preview = pane{}
+	if len(m.current.entries) == 0 || m.current.cursor >= len(m.current.entries) {
+		return m, nil
 	}
-	return m, nil
+
+	sel := m.current.entries[m.current.cursor]
+	selPath := filepath.Join(m.cwd, sel.Name)
+
+	if sel.IsDir {
+		m.preview = pane{path: selPath, entries: fs.ReadDir(selPath)}
+		return m, nil
+	}
+	return m, loadPreviewCmd(selPath)
 }
