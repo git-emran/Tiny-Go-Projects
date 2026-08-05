@@ -1,3 +1,4 @@
+// Package preview reads file contents for display in the preview pane.
 package preview
 
 import (
@@ -49,7 +50,7 @@ func isBinary(f *os.File) (bool, error) {
 		return false, err
 	}
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if buf[i] == 0 {
 			return true, nil
 		}

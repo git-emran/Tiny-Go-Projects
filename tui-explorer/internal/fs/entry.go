@@ -31,3 +31,25 @@ func ReadDir(path string) []Entry {
 
 	return out
 }
+
+// ReadDirsOnly returns only directory entries from the given path, sorted
+// alphabetically. Used for the parent pane so only navigable folders appear
+// (matching yazi's parent-column behaviour).
+func ReadDirsOnly(path string) []Entry {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil
+	}
+
+	var out []Entry
+	for _, f := range files {
+		if f.IsDir() {
+			out = append(out, Entry{Name: f.Name(), IsDir: true})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
+	})
+
+	return out
+}

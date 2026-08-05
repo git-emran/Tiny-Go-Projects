@@ -19,10 +19,12 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m, cmd = m.refreshPanes()
 	case previewLoadedMessage:
 		if msg.path == m.SelectedPath() {
 			if msg.err != nil {
@@ -35,7 +37,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		key := msg.String()
-		var cmd tea.Cmd
 
 		// handle the pending "gg" sequence first
 		if m.pendingG {
@@ -76,10 +77,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+u":
 			m.current.cursor = max(m.current.cursor-10, 0)
 			m, cmd = m.refreshPanes()
-
+		case ".":
+			m.showHidden = !m.showHidden
+			// Re-read current dir with updated filter and clamp cursor
+			m.current.entries = m.filterEntries(fs.ReadDir(m.cwd))
+			if m.current.cursor >= len(m.current.entries) {
+				m.current.cursor = max(len(m.current.entries)-1, 0)
+			}
+			m, cmd = m.refreshPanes()
 		}
 	}
-	return m, nil
+	return m, cmd
 }
 
 func (m Model) goToParent() (Model, tea.Cmd) {
@@ -89,7 +97,7 @@ func (m Model) goToParent() (Model, tea.Cmd) {
 	}
 
 	m.cwd = parent
-	m.current = pane{path: parent, entries: fs.ReadDir(parent)}
+	m.current = pane{path: parent, entries: m.filterEntries(fs.ReadDir(parent))}
 	return m.refreshPanes()
 }
 
@@ -102,7 +110,7 @@ func (m Model) enterSelected() (Model, tea.Cmd) {
 	if sel.IsDir {
 		newPath := filepath.Join(m.cwd, sel.Name)
 		m.cwd = newPath
-		m.current = pane{path: newPath, entries: fs.ReadDir(newPath)}
+		m.current = pane{path: newPath, entries: m.filterEntries(fs.ReadDir(newPath))}
 		m.current.cursor = 0
 		return m.refreshPanes()
 	}

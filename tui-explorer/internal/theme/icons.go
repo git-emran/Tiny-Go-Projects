@@ -40,7 +40,7 @@ var nerdIconsByExt = map[string]string{
 const (
 	nerdFolder      = "\uF07B"
 	nerdFolderOpen  = "\uF07C"
-	nerdFileDefault = "uF15B"
+	nerdFileDefault = "\uF15B"
 
 	plainFolder      = "[D]"
 	plainFiledefault = "[F]"
@@ -49,21 +49,21 @@ const (
 func IconFor(set IconSet, e fs.Entry, selected bool) string {
 	if set == IconSetPlain {
 		if e.IsDir {
-			return plainFolder
+			return plainFolder + " "
 		}
-		return plainFiledefault
+		return plainFiledefault + " "
 	}
 
 	if e.IsDir {
 		if selected {
-			return nerdFolderOpen
+			return nerdFolderOpen + " "
 		}
 
-		return nerdFolder
+		return nerdFolder + " "
 	}
 	ext := strings.ToLower(filepath.Ext(e.Name))
 	if icon, ok := nerdIconsByExt[ext]; ok {
-		return icon
+		return icon + " "
 	}
-	return nerdFileDefault
+	return nerdFileDefault + " "
 }

@@ -21,6 +21,7 @@ type Model struct {
 	width       int
 	height      int
 	pendingG    bool
+	showHidden  bool
 	icons       theme.IconSet
 }
 
@@ -28,15 +29,30 @@ type pane struct {
 	path    string
 	entries []fs.Entry
 	cursor  int
+	offset  int
+}
+
+// filterEntries removes dot-file entries when showHidden is false.
+func (m Model) filterEntries(entries []fs.Entry) []fs.Entry {
+	if m.showHidden {
+		return entries
+	}
+	out := entries[:0:0]
+	for _, e := range entries {
+		if len(e.Name) == 0 || e.Name[0] != '.' {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 func InitialModel() Model {
 	cwd, _ := os.Getwd()
 	m := Model{
-		cwd:     cwd,
-		current: pane{path: cwd, entries: fs.ReadDir(cwd)},
-		icons:   theme.IconSetnerd,
+		cwd:   cwd,
+		icons: theme.IconSetnerd,
 	}
+	m.current = pane{path: cwd, entries: m.filterEntries(fs.ReadDir(cwd))}
 	m, _ = m.refreshPanes()
 	return m
 }
@@ -50,9 +66,10 @@ func (m Model) SelectedPath() string {
 }
 
 func (m Model) refreshPanes() (Model, tea.Cmd) {
+	parentPath := filepath.Dir(m.cwd)
 	m.parent = pane{
-		path:    filepath.Dir(m.cwd),
-		entries: fs.ReadDir(filepath.Dir(m.cwd)),
+		path:    parentPath,
+		entries: m.filterEntries(fs.ReadDirsOnly(parentPath)),
 	}
 	for i, e := range m.parent.entries {
 		if e.Name == filepath.Base(m.cwd) {
@@ -72,7 +89,7 @@ func (m Model) refreshPanes() (Model, tea.Cmd) {
 	selPath := filepath.Join(m.cwd, sel.Name)
 
 	if sel.IsDir {
-		m.preview = pane{path: selPath, entries: fs.ReadDir(selPath)}
+		m.preview = pane{path: selPath, entries: m.filterEntries(fs.ReadDir(selPath))}
 		return m, nil
 	}
 	return m, loadPreviewCmd(selPath)
