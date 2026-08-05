@@ -1,4 +1,5 @@
-package main
+// Package walk lists filter out and list file functions
+package walk
 
 import (
 	"fmt"
@@ -7,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func filterOut(path, ext string, minSize int64, info os.FileInfo) bool {
+func FilterOut(path, ext string, minSize int64, info os.FileInfo) bool {
 	if info.IsDir() || info.Size() < minSize {
 		return true
 	}
@@ -18,7 +19,7 @@ func filterOut(path, ext string, minSize int64, info os.FileInfo) bool {
 	return false
 }
 
-func listFile(path string, out io.Writer) error {
+func ListFile(path string, out io.Writer) error {
 	_, err := fmt.Fprintln(out, path)
 	return err
 }

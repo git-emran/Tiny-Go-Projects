@@ -4,8 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/git-emran/tiny-go-projects/cli-filesystem-crawler/walk"
 )
 
 type config struct {
@@ -16,20 +19,20 @@ type config struct {
 
 func run(root string, out io.Writer, cfg config) error {
 	return filepath.Walk(root,
-		func(path string, info os.FileInfo, err error) error {
+		func(path string, info fs.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if filterOut(path, cfg.ext, cfg.size, info) {
+			if walk.FilterOut(path, cfg.ext, cfg.size, info) {
 				return nil
 			}
 
 			if cfg.list {
-				return listFile(path, out)
+				return walk.ListFile(path, out)
 			}
 
-			return listFile(path, out)
+			return walk.ListFile(path, out)
 		})
 }
 
