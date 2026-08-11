@@ -34,6 +34,7 @@ If a folder doesn’t have a `main.go` (or doesn’t compile as-is), run the spe
 - [`tcp-server`](#tcp-server)
 - [`uploading-file`](#uploading-file)
 - [`websockets-go`](#websockets-go)
+- [`cli-markdown-preview`](#cli-markdown-preview)
 
 ---
 
@@ -509,3 +510,39 @@ go run .
 - `GET /echo` → WebSocket endpoint (JSON messages like `{ "message": "hi" }`)
 
 
+## `cli-markdown-preview`
+
+**What it is:** A Minimalistic command line based Markdown preview tool. Using `bluemonday` package from golang which is an html sanitizer, `blackfriday/v2` which is a markdown processor and provides full UTF-8 support. 
+
+### Features
+     1	markdown → html conversion with blackfriday
+     2	html sanitization with bluemonday
+     3	custom html templates
+     4	temporary html file generation
+     5	automatic browser preview
+     6	cross-platform support: macos, linux, and windows
+
+### Usage
+go run . -file README.md
+
+Skip opening the browser:
+`
+go run . -file README.md -s
+`
+
+Use a custom HTML template:
+`
+go run . -file README.md -t template.html
+`
+
+The generated HTML file path is printed to stdout.
+
+Build
+`
+go build -o mdp .
+`
+
+Then:
+`
+./mdp -file README.md
+`

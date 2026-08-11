@@ -11,5 +11,6 @@ func TestFilterOut(t *testing.T) {
 		expected bool
 	}{
 		{"FilterNoExtension", "testdata/dir.log", "", 0, false},
+		{"FilterNoExtensionMatch", "testdata/dir.log", "", 0, false},
 	}
 }
