@@ -13,7 +13,9 @@ func main() {
 
 	w := a.NewWindow("pdfview")
 	w.Resize(newDefaultSize())
+	tb := newToolbar()
 	label := widget.NewLabel("pdfview - no file loaded")
-	w.SetContent(container.NewCenter(label))
+	content := container.NewBorder(tb.Container, nil, nil, nil, container.NewCenter(label))
+	w.SetContent(content)
 	w.ShowAndRun()
 }
