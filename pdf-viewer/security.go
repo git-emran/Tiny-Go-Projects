@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,4 +29,10 @@ func readFileBytes(path string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
+
+	if !bytes.HasPrefix(data, []byte(pdfMagicBytes)) {
+		return nil, fmt.Errorf("file does not appear to be a PDF")
+	}
+
+	return data, nil
 }

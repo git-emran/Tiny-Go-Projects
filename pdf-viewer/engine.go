@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"image"
+	"time"
 
 	"github.com/klippa-app/go-pdfium"
 	"github.com/klippa-app/go-pdfium/requests"
 	"github.com/klippa-app/go-pdfium/responses"
-	pdfium_single "github.com/klippa-app/go-pdfium/single_threaded"
+	"github.com/klippa-app/go-pdfium/webassembly"
 )
 
 type renderedPage struct {
@@ -23,8 +24,15 @@ type Engine struct {
 }
 
 func newEngine() (*Engine, error) {
-	pool := pdfium_single.Init(pdfium_single.Config{})
-	inst, err := pool.GetInstance(0)
+	pool, err := webassembly.Init(webassembly.Config{
+		MinIdle:  1,
+		MaxIdle:  2,
+		MaxTotal: 4,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("init pdfium pool: %w", err)
+	}
+	inst, err := pool.GetInstance(30 * time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("pdfium instance: %w", err)
 	}
