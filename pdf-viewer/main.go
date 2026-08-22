@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 )
@@ -15,28 +16,44 @@ func main() {
 	w := a.NewWindow("pdfview")
 	w.Resize(newDefaultSize())
 
+	engine, err := newEngine()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer engine.Close()
+
+	pageCount, err := engine.OpenFile(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	viewer := newViewer(engine, pageCount)
 	tb := newToolbar()
-	viewer := newViewer()
+	tb.Back.OnActivated = func() { logErr(viewer.Prev()) }
+	tb.Forward.OnActivated = func() { logErr(viewer.Next()) }
+
 	content := container.NewBorder(tb.Container, nil, nil, nil, viewer.image)
 	w.SetContent(content)
 
-	if len(os.Args) > 1 {
-		engine, err := newEngine()
-		if err != nil {
-			log.Fatal(err)
-		}
+	w.Canvas().SetOnTypedKey(func(e *fyne.KeyEvent) {
+		switch e.Name {
+		case fyne.KeyRight, "L":
+			logErr(viewer.Next())
 
-		defer engine.Close()
+		case fyne.KeyLeft, "H":
+			logErr(viewer.Prev())
+		}
+	})
 
-		if _, err := engine.OpenFile(os.Args[1]); err != nil {
-			log.Fatal(err)
-		}
-		page, err := engine.RenderPage(0, 1.0)
-		if err != nil {
-			log.Fatal(err)
-		}
-		viewer.Show(page)
+	if err := viewer.render(); err != nil {
+		log.Fatal(err)
 	}
 
 	w.ShowAndRun()
+}
+
+func logErr(err error) {
+	if err != nil {
+		log.Println("error:", err)
+	}
 }
