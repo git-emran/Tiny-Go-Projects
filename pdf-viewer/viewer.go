@@ -6,6 +6,13 @@ import (
 	"fyne.io/fyne/v2/canvas"
 )
 
+const (
+	minZoom     = 0.25
+	maxZoom     = 4.0
+	zoomStep    = 0.25
+	defaultZoom = 1.0
+)
+
 type Viewer struct {
 	image     *canvas.Image
 	engine    *Engine

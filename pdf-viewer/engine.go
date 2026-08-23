@@ -23,6 +23,8 @@ type Engine struct {
 	doc       *responses.OpenDocument
 }
 
+const maxRenderPixels = 8000 * 8000
+
 func newEngine() (*Engine, error) {
 	pool, err := webassembly.Init(webassembly.Config{
 		MinIdle:  1,
@@ -65,6 +67,19 @@ func (e *Engine) RenderPage(pageIndex int, scale float32) (*renderedPage, error)
 			Index:    pageIndex,
 		},
 	}
+	sizeRes, err := e.insatance.GetPageSize(&requests.GetPageSize{Page: page})
+	if err != nil {
+		return nil, fmt.Errorf("get page size %d: %w", pageIndex, err)
+	}
+
+	pageHeightPt := sizeRes.Height
+	pageWidthPt := sizeRes.Width
+
+	effectivePixels := pageWidthPt * float64(scale) * pageHeightPt * float64(scale)
+	if effectivePixels > maxRenderPixels {
+		return nil, fmt.Errorf("requested render size exceeds limit")
+	}
+
 	res, err := e.insatance.RenderPageInDPI(&requests.RenderPageInDPI{
 		Page: page,
 		DPI:  int(72 * scale),
