@@ -1,8 +1,9 @@
 package lexer
 
 import (
-	"go/token"
 	"testing"
+
+	"github.com/git-emran/tiny-go-projects/interpreter-in-go/token"
 )
 
 func TestNextToken(t *testing.T) {
@@ -10,5 +11,9 @@ func TestNextToken(t *testing.T) {
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
-	}{}
+	}{
+		{token.ASSIGN, "="},
+		{token.PLUS, "+"},
+		{token.LPAREN, "("},
+	}
 }
