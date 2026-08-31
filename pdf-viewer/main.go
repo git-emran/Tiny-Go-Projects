@@ -31,6 +31,9 @@ func main() {
 	tb := newToolbar()
 	tb.Back.OnActivated = func() { logErr(viewer.Prev()) }
 	tb.Forward.OnActivated = func() { logErr(viewer.Next()) }
+	tb.ZoomIn.OnActivated = func() { logErr(viewer.ZoomIn()) }
+	tb.ZoomOut.OnActivated = func() { logErr(viewer.ZoomOut()) }
+	tb.ZoomReset.OnActivated = func() { logErr(viewer.ZoomReset()) }
 
 	content := container.NewBorder(tb.Container, nil, nil, nil, viewer.image)
 	w.SetContent(content)
@@ -42,6 +45,12 @@ func main() {
 
 		case fyne.KeyLeft, "H":
 			logErr(viewer.Prev())
+
+		case fyne.KeyPlus, "Equal":
+			logErr(viewer.ZoomIn())
+
+		case fyne.KeyMinus:
+			logErr(viewer.ZoomIn())
 		}
 	})
 

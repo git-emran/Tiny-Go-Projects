@@ -68,3 +68,29 @@ func (v *Viewer) Prev() error {
 	v.pageIndex--
 	return v.render()
 }
+
+func (v *Viewer) ZoomIn() error {
+	v.zoom = clampZoom(v.zoom + zoomStep)
+	return v.render()
+}
+
+func (v *Viewer) ZoomOut() error {
+	v.zoom = clampZoom(v.zoom + zoomStep)
+	return v.render()
+}
+
+func (v *Viewer) ZoomReset() error {
+	v.zoom = defaultZoom
+	return v.render()
+}
+
+func clampZoom(z float32) float32 {
+	if z < minZoom {
+		return minZoom
+	}
+
+	if z > maxZoom {
+		return maxZoom
+	}
+	return z
+}
