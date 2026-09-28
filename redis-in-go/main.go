@@ -6,11 +6,17 @@ type Store struct {
 	data map[string]string
 }
 
+func (s *Store) Keys() []string {
+	return []string{}
+}
+
 func (s *Store) Get(key string) (string, bool) {
-	return "", false
+	val, ok := s.data[key]
+	return val, ok
 }
 
 func (s *Store) Set(key string, value string) {
+	s.data[key] = value
 }
 
 func NewStore() *Store {
@@ -20,8 +26,11 @@ func NewStore() *Store {
 }
 
 func main() {
-	store := NewStore()
-	store.Set("key1", "value")
-	store.Get("key1")
-	fmt.Println("Go key value store project")
+	s := NewStore()
+	s.Set("a", "32")
+	s.Set("b", "52")
+
+	value, _ := s.Get("a")
+
+	fmt.Println(value)
 }
