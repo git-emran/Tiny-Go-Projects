@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/git-emran/tiny-go-projects/interpreter-in-go/lexer"
+	"github.com/git-emran/tiny-go-projects/interpreter-in-go/token"
 )
 
 const PROMPT = ">> "
@@ -22,5 +23,8 @@ func Start(in io.Reader, out io.Writer) {
 		}
 		line := scanner.Text()
 		l := lexer.New(line)
+		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
+			fmt.Fprintf(out, "%+v\n", tok)
+		}
 	}
 }
