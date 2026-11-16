@@ -1,6 +1,8 @@
 // Package ast is the parser building block
 package ast
 
+import "github.com/git-emran/tiny-go-projects/interpreter-in-go/token"
+
 type Node interface {
 	TokenLiteral() string
 }
@@ -26,3 +28,17 @@ func (p *Program) TokenLiteral() string {
 		return ""
 	}
 }
+
+type LetStatement struct {
+	Token token.Token // the token.LET token
+	Name  *Identifier
+	Value Expression
+}
+
+type Identifier struct {
+	Token token.Token
+	Value string
+}
+
+func (i *Identifier) expressionNode()      {}
+func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
